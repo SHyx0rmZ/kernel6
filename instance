@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+# coding: utf-8
+
+require "erb"
+require "yaml"
+
+unless ARGV.size.eql? 2
+    exit 1
+end
+
+f = File.open ARGV[0], "r"
+
+if f.closed?
+    exit 1
+end
+
+r = f.read
+
+f.close
+
+f = File.open "LICENSE", "r"
+
+if f.closed?
+    exit 1
+end
+
+l = f.read
+
+f.close
+
+config = YAML.load_file "build/instance.yaml"
+
+e = ERB.new r
+
+f = File.open ARGV[1], "w"
+
+if f.closed?
+    exit 1
+end
+
+f.write l
+f.write e.result binding
+
+f.close

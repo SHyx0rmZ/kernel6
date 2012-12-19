@@ -1,0 +1,8 @@
+kernel_entry : kernel
+kernel_address : 0x00100000
+
+loader_stack_size : 0x1000
+loader_map_size : 0x01000000 # don't use values above 0x40000000
+loader_stack_address : 0x300000
+loader_pml4_address : 0x300000
+loader_use_bss : true

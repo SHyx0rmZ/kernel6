@@ -1,4 +1,16 @@
 #!/usr/bin/env ruby
 # coding: utf-8
 
-puts "nothing to do here"
+require "yaml"
+
+y = YAML.load_file "config.yaml"
+
+f = File.open "build/instance.yaml", "w"
+
+if f.closed?
+    exit 1
+end
+
+f.write y.to_yaml
+
+f.close
