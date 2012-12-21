@@ -1,16 +1,16 @@
 OUTPUT_FORMAT("elf32-i386")
-OUTPUT_ARCH("i386:x86-64")
-ENTRY(<%= config["kernel_entry"] %>)
+OUTPUT_ARCH("i386")
+ENTRY(<%= config["loader_entry"] %>)
 
 SECTIONS
 {
-    . = <%= config["kernel_address"] %>;
-    . = ALIGN(0x10);
-    kernel_area_begin = .;
+    . = <%= config["loader_address"] %>;
     .text :
     {
         . = ALIGN(0x10);
         *(.multiboot)
+        . = ALIGN(0x10);
+        *(.bootstrap)
         . = ALIGN(0x10);
         *(.text)
     }
@@ -29,13 +29,17 @@ SECTIONS
         . = ALIGN(0x10);
         *(.data)
         *(.rodata)
+
+        . = ALIGN(0x10);
+        payload_begin = .;
+        *(.payload)
+        payload_end = .;
     }
     .bss :
     {
         . = ALIGN(0x10);
         *(.bss)
         *(.loader)
+        *(COMMON)
     }
-    . = ALIGN(0x10);
-    kernel_area_end = .;
 }

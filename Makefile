@@ -1,35 +1,53 @@
-CXXFLAGS = -g -g3 -Wall -Wextra -Werror -std=gnu++11 -ffreestanding -nostdlib -nostartfiles -fno-leading-underscore -O0 -fno-rtti
+CXXFLAGS = -g -g3 -Wall -Wextra -Werror -std=gnu++11 -ffreestanding -nostdlib -nostartfiles -fno-leading-underscore -O0 -fno-rtti -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow
 LDFLAGS = -n
 
 .PHONY: all clean
 
 all:
-	@mkdir -p build/src build/obj build/out
+	@mkdir -p build/src/kernel build/src/loader build/obj/kernel build/obj/loader build/out
 	@echo "> ruby generate"
 	@ruby generate
 	@make -s $(patsubst src/%.ld, build/src/%.ld, $(wildcard src/*.ld))
-	@make -s $(patsubst src/%.cpp, build/src/%.cpp, $(wildcard src/*.cpp))
-	@make -s $(patsubst src/%.S, build/src/%.S, $(wildcard src/*.S))
-	@make -s $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/*.cpp))
-	@make -s $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/*.S))
-	@make -s build/out/kernel.bin
+	@make -s $(patsubst src/%.cpp, build/src/%.cpp, $(wildcard src/*/*.cpp))
+	@make -s $(patsubst src/%.S, build/src/%.S, $(wildcard src/*/*.S))
+	@make -s build/out/kernel6
 	@echo "> done"
 
-build/out/kernel.bin: $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/*.cpp)) $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/*.S))
+build/out/kernel: $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/kernel/*.cpp)) $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/kernel/*.S))
 	@echo "> ld $@"
-	@ld $(LDFLAGS) -o $@ $^ -T build/src/kernel.ld
+	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_kernel.ld
+
+build/obj/payload: build/out/kernel build/src/payload.S
+	@echo "> g++ $@"
+	@g++ $(CXXFLAGS) -m32 -c build/src/payload.S -o $@
+
+build/out/loader: build/obj/payload $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/loader/*.cpp)) $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/loader/*.S))
+	@echo "> ld $@"
+	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_loader.ld
+
+build/out/kernel6: build/out/loader
+	@echo "> cp $@"
+	@cp $< $@
 
 build/src/%: src/% build/instance.yaml
 	@echo "> ruby instance $<"
 	@ruby instance $< $@
 
-build/obj/%_cpp.o: build/src/%.cpp
+build/obj/kernel/%_cpp.o: build/src/kernel/%.cpp
 	@echo "> g++ $<"
-	@g++ $(CXXFLAGS) -c $< -o $@
+	@g++ $(CXXFLAGS) -m64 -c $< -o $@
 
-build/obj/%_S.o: build/src/%.S
+build/obj/kernel/%_S.o: build/src/kernel/%.S
 	@echo "> g++ $<"
-	@g++ $(CXXFLAGS) -c $< -o $@
+	@g++ $(CXXFLAGS) -m64 -c $< -o $@
+
+build/obj/loader/%_cpp.o: build/src/loader/%.cpp
+	@echo "> g++ $<"
+	@g++ $(CXXFLAGS) -m32 -c $< -o $@
+
+build/obj/loader/%_S.o: build/src/loader/%.S
+	@echo "> g++ $<"
+	@g++ $(CXXFLAGS) -m32 -c $< -o $@
 
 clean:
 	@-rm -Rf build
