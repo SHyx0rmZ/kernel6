@@ -38,7 +38,7 @@ if f.closed?
     exit 1
 end
 
-f.write l
 f.write e.result binding
+f.write l
 
 f.close
