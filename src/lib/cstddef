@@ -1,0 +1,6 @@
+#ifndef _LIBNUKEXX_CSTDDEF_
+#define _LIBNUKEXX_CSTDDEF_
+
+#define NULL nullptr
+
+#endif
