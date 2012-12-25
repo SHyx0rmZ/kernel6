@@ -49,6 +49,16 @@ namespace std
     struct is_integral : __is_integral_helper<typename std::remove_cv<T>::type>
     {
     };
+
+    template <typename T, typename U>
+    struct is_same : false_type
+    {
+    };
+
+    template <typename T>
+    struct is_same<T, T> : true_type
+    {
+    };
 }
 
 #endif
