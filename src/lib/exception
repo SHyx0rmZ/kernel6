@@ -1,0 +1,21 @@
+#ifndef _LIBNUKEXX_EXCEPTION_
+#define _LIBNUKEXX_EXCEPTION_
+
+namespace std
+{
+    class exception
+    {
+        public:
+            exception() noexcept;
+            exception(const exception &other) noexcept;
+            virtual ~exception();
+
+            exception &operator=(const exception &other) noexcept;
+
+            virtual const char *what() const noexcept;
+    };
+
+    // TODO: missing
+}
+
+#endif
