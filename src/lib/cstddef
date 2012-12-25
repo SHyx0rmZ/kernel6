@@ -2,6 +2,8 @@
 #define _LIBNUKEXX_CSTDDEF_
 
 #define NULL nullptr
+#define offsetof(type, member) ((std::size_t)&(((type *)0)->member))
+
 namespace std
 {
     typedef __SIZE_TYPE__       size_t;
