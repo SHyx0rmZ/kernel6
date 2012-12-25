@@ -2,5 +2,9 @@
 #define _LIBNUKEXX_CSTDDEF_
 
 #define NULL nullptr
+namespace std
+{
+    typedef __SIZE_TYPE__       size_t;
+}
 
 #endif
