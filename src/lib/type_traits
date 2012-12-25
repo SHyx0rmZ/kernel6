@@ -19,6 +19,36 @@ namespace std
 
     typedef std::integral_constant<bool, true> true_type;
     typedef std::integral_constant<bool, false> false_type;
+
+    template <typename>
+    struct __is_integral_helper : false_type
+    {
+    };
+
+    <% [ "bool", "char16_t", "char32_t" ].each do |type| %>
+
+    template <>
+    struct __is_integral_helper<<%= type %>> : true_type
+    {
+    };
+
+    <% end %>
+
+    <% [ "char" , "short int", "int", "long long int" ].each do |type| %>
+    <% [ "signed", "unsigned" ].each do |sign| %>
+
+    template <>
+    struct __is_integral_helper<<%= sign %> <%= type %>> : true_type
+    {
+    };
+
+    <% end %>
+    <% end %>
+
+    template <typename T>
+    struct is_integral : __is_integral_helper<typename std::remove_cv<T>::type>
+    {
+    };
 }
 
 #endif
