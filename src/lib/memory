@@ -1,0 +1,13 @@
+#ifndef _LIBNUKEXX_MEMORY_
+#define _LIBNUKEXX_MEMORY_
+
+namespace std
+{
+    template <typename T>
+    T *addressof(T &arg) noexcept
+    {
+        return reinterpret_cast<T *>(&const_cast<char &>(reinterpret_cast<const volatile char &>(arg)));
+    }
+}
+
+#endif
