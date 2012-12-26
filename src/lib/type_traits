@@ -102,6 +102,25 @@ namespace std
     {
     };
 
+    template <typename>
+    struct is_function : false_type
+    {
+    };
+
+    <% [ "", "", "const", "volatile" ].combination(2).to_a.uniq.each do |qualifier| %>
+
+    template <typename T, typename ... A>
+    struct is_function<T(A ...)<%= qualifier.join(" ").strip.size.eql?(0) ? "" : " " %><%= qualifier.join(" ").strip %>> : true_type
+    {
+    };
+
+    template <typename T, typename ... A>
+    struct is_function<T(A ... ...)<%= qualifier.join(" ").strip.size.eql?(0) ? "" : " " %><%= qualifier.join(" ").strip %>> : true_type
+    {
+    };
+
+    <% end %>
+
     template <typename T, typename U>
     struct is_same : false_type
     {
