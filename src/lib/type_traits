@@ -87,6 +87,11 @@ namespace std
     {
     };
 
+    template <typename T>
+    struct is_enum : std::integral_constant<bool, __is_enum(T)>
+    {
+    };
+
     template <typename T, typename U>
     struct is_same : false_type
     {
