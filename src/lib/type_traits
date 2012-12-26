@@ -161,6 +161,21 @@ namespace std
     {
     };
 
+    template <typename T>
+    struct __is_member_pointer_helper : false_type
+    {
+    };
+
+    template <typename T, typename U>
+    struct __is_member_pointer_helper<T U::*> : true_type
+    {
+    };
+
+    template <typename T>
+    struct is_member_pointer : __is_member_pointer_helper<typename std::remove_cv<T>::type>
+    {
+    };
+
     template <typename T, typename U>
     struct is_same : false_type
     {
