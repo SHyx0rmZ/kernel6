@@ -121,6 +121,21 @@ namespace std
 
     <% end %>
 
+    template <typename T>
+    struct __is_pointer_helper : false_type
+    {
+    };
+
+    template <typename T>
+    struct __is_pointer_helper<T *> : true_type
+    {
+    };
+
+    template <typename T>
+    struct is_pointer : __is_pointer_helper<typename std::remove_cv<T>::type>
+    {
+    };
+
     template <typename T, typename U>
     struct is_same : false_type
     {
