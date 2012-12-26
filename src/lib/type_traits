@@ -92,6 +92,11 @@ namespace std
     {
     };
 
+    template <typename T>
+    struct is_union : std::integral_constant<bool, __is_union(T)>
+    {
+    };
+
     template <typename T, typename U>
     struct is_same : false_type
     {
