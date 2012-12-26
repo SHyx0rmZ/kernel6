@@ -136,6 +136,16 @@ namespace std
     {
     };
 
+    template <typename T>
+    struct is_lvalue_reference : false_type
+    {
+    };
+
+    template <typename T>
+    struct is_lvalue_reference<T &> : true_type
+    {
+    };
+
     template <typename T, typename U>
     struct is_same : false_type
     {
