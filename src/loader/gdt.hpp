@@ -47,6 +47,6 @@ struct GDTPointer
 #define GDT_AVAILABLE       0x01
 
 void gdt_init();
-void gdt_load();
+void gdt_load(std::uint8_t selector, void *pointer);
 
 #endif

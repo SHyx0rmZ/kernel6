@@ -6,6 +6,6 @@ extern "C" void loader_bootstrap(void *)
     gdt_init();
     idt_init();
 
-    gdt_load();
+    gdt_load(0x08, nullptr);
     idt_load();
 }
