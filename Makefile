@@ -45,7 +45,7 @@ build/obj/kernel/%_S.o: build/src/kernel/%.S
 
 build/obj/loader/%_cpp.o: build/src/loader/%.cpp
 	@echo "> g++ $<"
-	@g++ $(CXXFLAGS) -Ibuild/src/loader -isystem build/src/lib -m32 -c $< -o $@
+	@g++ $(CXXFLAGS) -Ibuild/src/loader -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
 
 build/obj/loader/%_S.o: build/src/loader/%.S
 	@echo "> g++ $<"
