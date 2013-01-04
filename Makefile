@@ -2,6 +2,7 @@ CXXFLAGS = -g -g3 -Wall -Wextra -Werror -std=gnu++11 -ffreestanding -nostdlib -n
 LDFLAGS = -n
 
 .PHONY: all clean
+.SUFFIXES:
 
 all:
 	@mkdir -p build/src/kernel build/src/loader build/src/lib build/obj/kernel build/obj/loader build/src/lib build/out
