@@ -6,8 +6,7 @@ LDFLAGS = -n
 
 all:
 	@mkdir -p build/src/kernel build/src/loader build/src/lib build/obj/kernel build/obj/loader build/src/lib build/out
-	@echo "> ruby generate"
-	@ruby generate
+	@make -s build/instance.yaml
 	@make -s $(patsubst src/%.ld, build/src/%.ld, $(wildcard src/*.ld))
 	@make -s $(patsubst src/%.cpp, build/src/%.cpp, $(wildcard src/*/*.cpp))
 	@make -s $(patsubst src/%.S, build/src/%.S, $(wildcard src/*/*.S))
@@ -56,6 +55,11 @@ build/obj/_udivdi3.o:
 	@echo "> ar $@"
 	@ar -x $$(g++ -m32 --print-libgcc-file-name) _udivdi3.o
 	@mv _udivdi3.o build/obj/
+
+
+build/instance.yaml: config.yaml
+	@echo "> ruby generate"
+	@ruby generate
 
 clean:
 	@-rm -Rf build
