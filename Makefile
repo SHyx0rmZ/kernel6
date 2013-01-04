@@ -23,7 +23,7 @@ build/obj/payload: build/out/kernel build/src/payload.S
 	@echo "> g++ $@"
 	@g++ $(CXXFLAGS) -m32 -c build/src/payload.S -o $@
 
-build/out/loader: build/obj/payload $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/loader/*.cpp)) $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/loader/*.S))
+build/out/loader: build/obj/payload build/obj/_udivdi3.o $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/loader/*.cpp)) $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/loader/*.S))
 	@echo "> ld $@"
 	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_loader.ld
 
@@ -50,6 +50,11 @@ build/obj/loader/%_cpp.o: build/src/loader/%.cpp
 build/obj/loader/%_S.o: build/src/loader/%.S
 	@echo "> g++ $<"
 	@g++ $(CXXFLAGS) -Ibuild/src/loader -isystem build/src/lib -m32 -c $< -o $@
+
+build/obj/_udivdi3.o:
+	@echo "> ar $@"
+	@ar -x $$(g++ -m32 --print-libgcc-file-name) _udivdi3.o
+	@mv _udivdi3.o build/obj/
 
 clean:
 	@-rm -Rf build
