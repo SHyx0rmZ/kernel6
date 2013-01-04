@@ -15,7 +15,7 @@ all:
 	@make -s build/out/kernel6
 	@echo "> done"
 
-build/out/kernel: $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/kernel/*.cpp)) $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/kernel/*.S)) build/out/libnukexx.x86-64.a
+build/out/kernel: $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/kernel/*.cpp)) $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/kernel/*.S)) build/out/libnukexx.x86-64.a build/src/script_kernel.ld
 	@echo "> ld $@"
 	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_kernel.ld
 
@@ -31,7 +31,7 @@ build/obj/payload: build/out/kernel build/src/payload.S
 	@echo "> g++ $@"
 	@g++ $(CXXFLAGS) -m32 -c build/src/payload.S -o $@
 
-build/out/loader: build/obj/payload build/obj/_udivdi3.o $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/loader/*.cpp)) $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/loader/*.S)) build/out/libnukexx.x86.a
+build/out/loader: build/obj/payload build/obj/_udivdi3.o $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/loader/*.cpp)) $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/loader/*.S)) build/out/libnukexx.x86.a build/src/script_loader.ld
 	@echo "> ld $@"
 	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_loader.ld
 
