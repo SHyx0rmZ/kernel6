@@ -176,6 +176,24 @@ namespace std
     {
     };
 
+    template <typename T>
+    struct remove_reference
+    {
+        typedef T type;
+    };
+
+    template <typename T>
+    struct remove_reference<T &>
+    {
+        typedef T type;
+    };
+
+    template <typename T>
+    struct remove_reference<T &&>
+    {
+        typedef T type;
+    };
+
     template <typename T, typename U>
     struct is_same : false_type
     {
