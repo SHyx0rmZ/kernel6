@@ -28,7 +28,7 @@ void gdt_init()
     gdt_set_entry(4, GDT_BASE_NULL, GDT_LIMIT_FULL, GDT_PRESENT | GDT_RING_3 | GDT_SEGMENT | GDT_WRITABLE | GDT_DIRECTION_UP, GDT_GRANULAR | GDT_PROTECTED_MODE);
 }
 
-void gdt_load(std::uint8_t selector, void *pointer)
+void gdt_load()
 {
     GDTPointer gdtp;
 
@@ -43,8 +43,7 @@ void gdt_load(std::uint8_t selector, void *pointer)
         std::uint16_t segment;
     } jump_address;
 
-    jump_address.segment = selector;
-    jump_address.offset = reinterpret_cast<std::uint32_t>(pointer);
+    jump_address.segment = 0x08;
 
     asm volatile (
         "lgdt %0 \n"
@@ -53,12 +52,9 @@ void gdt_load(std::uint8_t selector, void *pointer)
         "mov %1, %%ss \n"
         "mov %2, %%fs \n"
         "mov %2, %%gs \n"
-        "testl %4, %4 \n"
-        "jnz gdt_jump_hasoffset \n"
         "movl $gdt_jump, %3 \n"
-        "gdt_jump_hasoffset: \n"
         "ljmpl *%3 \n"
         "gdt_jump: \n"
-        :: "m"(gdtp), "r"(0x10), "r"(0x00), "m"(jump_address), "r"(pointer) : "memory"
+        :: "m"(gdtp), "r"(0x10), "r"(0x00), "m"(jump_address) : "memory"
     );
 }
