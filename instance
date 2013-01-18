@@ -4,41 +4,24 @@
 require "erb"
 require "yaml"
 
-unless ARGV.size.eql? 2
-    exit 1
-end
+exit 1 unless ARGV.size.eql? 3 and File.exists? ARGV[0] and File.exists? ARGV[1]
 
-f = File.open ARGV[0], "r"
+fi = File.open ARGV[1], "r"
 
-if f.closed?
-    exit 1
-end
+exit 1 if fi.closed?
 
-r = f.read
+r = fi.read
 
-f.close
+fi.close
 
-f = File.open "LICENSE", "r"
-
-if f.closed?
-    exit 1
-end
-
-l = f.read
-
-f.close
-
-config = YAML.load_file "build/instance.yaml"
+config = YAML.load_file ARGV[0]
 
 e = ERB.new r
 
-f = File.open ARGV[1], "w"
+fo = File.open ARGV[2], "w"
 
-if f.closed?
-    exit 1
-end
+exit 1 if fo.closed?
 
-f.write e.result binding
-f.write l
+fo.write e.result binding
 
-f.close
+fo.close
