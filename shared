@@ -27,7 +27,7 @@ if ARGV[0].eql? "i386"
             level -= line.scan(/\}/).size
 
             if line[/\*|&/]
-                fo.puts "  /* ruby */ void *_shared_reserved_#{index};"
+                fo.puts "  /* ruby */ const void *const _shared_reserved_#{index} = reinterpret_cast<const void *const>(0);"
 
                 index += 1
             end
