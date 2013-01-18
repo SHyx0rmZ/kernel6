@@ -1,81 +1,137 @@
 CXXFLAGS = -g -g3 -Wall -Wextra -Werror -std=gnu++11 -ffreestanding -nostdlib -nostartfiles -nostdinc++ -fno-leading-underscore -O0 -fno-rtti -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow
 LDFLAGS = -n
 
-.PHONY: all clean
+DIRECTORIES = kernel loader lib shared
+SOURCES_KERNEL = $(wildcard src/kernel/*.cpp) $(wildcard src/kernel/*.S)
+SOURCES_LOADER = $(wildcard src/loader/*.cpp) $(wildcard src/loader/*.S)
+SOURCES_LIBNUKEXX = $(wildcard src/lib/*.cpp) $(wildcard src/lib/*.S)
+HEADERS_KERNEL = $(wildcard src/kernel/*.hpp)
+HEADERS_LOADER = $(wildcard src/loader/*.hpp)
+HEADERS_LIBNUKEXX = $(patsubst %.cpp, , $(patsubst %.S, , $(wildcard src/lib/*)))
+HEADERS_SHARED = $(wildcard src/shared/*.hpp)
+OBJECTS_KERNEL = $(patsubst src/%.cpp, build/obj/%.cpp.o, $(patsubst src/%.S, build/obj/%.S.o, $(SOURCES_KERNEL)))
+OBJECTS_LOADER = $(patsubst src/%.cpp, build/obj/%.cpp.o, $(patsubst src/%.S, build/obj/%.S.o, $(SOURCES_LOADER)))
+OBJECTS_LIBNUKEXX_X86 = $(patsubst src/%.cpp, build/obj/%.x86.cpp.o, $(patsubst src/%.S, build/obj/%.x86.S.o, $(SOURCES_LIBNUKEXX)))
+OBJECTS_LIBNUKEXX_X64 = $(patsubst src/%.cpp, build/obj/%.x64.cpp.o, $(patsubst src/%.S, build/obj/%.x64.S.o, $(SOURCES_LIBNUKEXX)))
+SOURCES = $(SOURCES_KERNEL) $(SOURCES_LOADER) $(SOURCES_LIBNUKEXX)
+HEADERS = $(HEADERS_KERNEL) $(HEADERS_LOADER) $(HEADERS_LIBNUKEXX) $(HEADERS_SHARED)
+OBJECTS = $(OBJECTS_KERNEL) $(OBJECTS_LOADER) $(OBJECTS_LIBNUKEXX_X86) $(OBJECTS_LIBNUKEXX_X64)
+SCRIPTS = $(wildcard src/*.ld)
+
+.PHONY: all clean directories
 .SUFFIXES:
 
 all:
-	@mkdir -p build/src/kernel build/src/loader build/src/lib build/obj/kernel build/obj/loader build/src/lib build/obj/lib build/out
-	@make -s build/instance.yaml
-	@make -s $(patsubst src/%.ld, build/src/%.ld, $(wildcard src/*.ld))
-	@make -s $(patsubst src/%.cpp, build/src/%.cpp, $(wildcard src/*/*.cpp))
-	@make -s $(patsubst src/%.S, build/src/%.S, $(wildcard src/*/*.S))
-	@make -s $(patsubst src/%.hpp, build/src/%.hpp, $(wildcard src/*/*.hpp))
-	@make -s $(patsubst src/%, build/src/%, $(wildcard src/lib/*))
+	@make -s directories
+	@make -s $(patsubst src/%, build/src/%, $(HEADERS) $(SOURCES) $(SCRIPTS))
 	@make -s build/out/kernel6
 	@echo "> done"
 
-build/out/kernel: $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/kernel/*.cpp)) $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/kernel/*.S)) build/out/libnukexx.x86-64.a build/src/script_kernel.ld
-	@echo "> ld $@"
-	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_kernel.ld
+# binaries, libnukexx
 
-build/out/libnukexx.x86.a: $(patsubst src/%.cpp, build/obj/%_x86_cpp.o, $(wildcard src/lib/*.cpp))
-	@echo "> ar $@"
+build/out/libnukexx.x86.a: $(OBJECTS_LIBNUKEXX_X86)
+	@echo "> ar   libnukexx.x86.a"
 	@ar -rc build/out/libnukexx.x86.a $^
 
-build/out/libnukexx.x86-64.a: $(patsubst src/%.cpp, build/obj/%_x86_64_cpp.o, $(wildcard src/lib/*.cpp))
-	@echo "> ar $@"
-	@ar -rc build/out/libnukexx.x86-64.a $^
+build/out/libnukexx.x64.a: $(OBJECTS_LIBNUKEXX_X64)
+	@echo "> ar   libnukexx.x64.a"
+	@ar -rc build/out/libnukexx.x64.a $^
 
-build/obj/payload: build/out/kernel build/src/payload.S
-	@echo "> g++ $@"
-	@g++ $(CXXFLAGS) -m32 -c build/src/payload.S -o $@
+# binaries, kernel
 
-build/out/loader: build/obj/payload build/obj/_udivdi3.o $(patsubst src/%.cpp, build/obj/%_cpp.o, $(wildcard src/loader/*.cpp)) $(patsubst src/%.S, build/obj/%_S.o, $(wildcard src/loader/*.S)) build/out/libnukexx.x86.a build/src/script_loader.ld
-	@echo "> ld $@"
-	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_loader.ld
+build/out/kernel: $(OBJECTS_KERNEL) build/out/libnukexx.x64.a build/src/script_kernel.ld
+	@echo "> ld   kernel"
+	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_kernel.ld
 
+# because we need to boot the loader first
 build/out/kernel6: build/out/loader
-	@echo "> cp $@"
+	@echo "> cp   kernel6"
 	@cp $< $@
 
-build/src/%: src/% build/instance.yaml
-	@echo "> ruby instance $<"
-	@ruby instance $< $@
+# binaries, loader
 
-build/obj/kernel/%_cpp.o: build/src/kernel/%.cpp
-	@echo "> g++ $<"
+# payload wraps kernel
+build/obj/payload: build/out/kernel build/src/payload.S
+	@echo "> g++  $(patsubst build/obj/%, %, $@)"
+	@g++ $(CXXFLAGS) -m32 -c build/src/payload.S -o $@
+
+build/out/loader: build/obj/payload build/obj/_udivdi3.o $(OBJECTS_LOADER) build/out/libnukexx.x86.a build/src/script_loader.ld
+	@echo "> ld   loader"
+	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_loader.ld
+
+# template instantiation
+
+build/src/shared/%.hpp: src/shared/%.hpp build/config.yml
+	@echo "> ruby $(patsubst src/%,%,$<)"
+	@ruby instance build/config.yml $< $@
+	@ruby shared amd64 $@ $(patsubst build/src/%,build/src/x64/%,$(patsubst %.hpp, %.x64.hpp, $@))
+	@ruby shared i386 $@ $(patsubst build/src/%,build/src/x86/%,$(patsubst %.hpp, %.x86.hpp, $@))
+
+build/src/%: src/% build/config.yml
+	@echo "> ruby $(patsubst src/%,%,$<)"
+	@ruby instance build/config.yml $< $@
+
+# compilation, kernel
+
+build/obj/kernel/%.cpp.o: build/src/kernel/%.cpp
+	@echo "> g++  $(patsubst build/src/%,%,$<)"
 	@g++ $(CXXFLAGS) -Ibuild/src/kernel -isystem build/src/lib -m64 -c $< -o $@
 
-build/obj/kernel/%_S.o: build/src/kernel/%.S
-	@echo "> g++ $<"
+build/obj/kernel/%.S.o: build/src/kernel/%.S
+	@echo "> g++  $(patsubst build/src/%,%,$<)"
 	@g++ $(CXXFLAGS) -Ibuild/src/kernel -isystem build/src/lib -m64 -c $< -o $@
 
-build/obj/loader/%_cpp.o: build/src/loader/%.cpp
-	@echo "> g++ $<"
+# compilation, loader
+
+build/obj/loader/%.cpp.o: build/src/loader/%.cpp
+	@echo "> g++  $(patsubst build/src/%,%,$<)"
 	@g++ $(CXXFLAGS) -Ibuild/src/loader -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
 
-build/obj/loader/%_S.o: build/src/loader/%.S
-	@echo "> g++ $<"
+build/obj/loader/%.S.o: build/src/loader/%.S
+	@echo "> g++  $(patsubst build/src/%,%,$<)"
 	@g++ $(CXXFLAGS) -Ibuild/src/loader -isystem build/src/lib -m32 -c $< -o $@
 
-build/obj/lib/%_x86_cpp.o: build/src/lib/%.cpp
-	@echo "> g++ $<"
-	@g++ $(CXXFLAGS) -Ibuild/src/lib -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
+# compilation, libnukexx
 
-build/obj/lib/%_x86_64_cpp.o: build/src/lib/%.cpp
-	@echo "> g++ $<"
-	@g++ $(CXXFLAGS) -Ibuild/src/lib -isystem build/src/lib -m64 -c $< -o $@
+build/obj/lib/%.x86.cpp.o: build/src/lib/%.cpp
+	@echo "> g++  $(patsubst build/src/%,%,$<)"
+	@g++ $(CXXFLAGS) -Ibuild/src/x86/shared -Ibuild/src/lib -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
+
+build/obj/lib/%.x86.S.o: build/src/lib/%.S
+	@echo "> g++  $(patsubst build/src/%,%,$<)"
+	@g++ $(CXXFLAGS) -Ibuild/src/x86/shared -Ibuild/src/lib -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
+
+build/obj/lib/%.x64.cpp.o: build/src/lib/%.cpp
+	@echo "> g++  $(patsubst build/src/%,%,$<)"
+	@g++ $(CXXFLAGS) -Ibuild/src/x64/shared -Ibuild/src/lib -isystem build/src/lib -m64 -c $< -o $@
+
+build/obj/lib/%.x64.S.o: build/src/lib/%.S
+	@echo "> g++  $(patsubst build/src/%,%,$<)"
+	@g++ $(CXXFLAGS) -Ibuild/src/x64/shared -Ibuild/src/lib -isystem build/src/lib -m64 -c $< -o $@
+
+# extraction of 64 bit arithmetics
 
 build/obj/_udivdi3.o:
-	@echo "> ar $@"
+	@echo "> ar   $(patsubst build/obj/%,%,$@)"
 	@ar -x $$(g++ -m32 --print-libgcc-file-name) _udivdi3.o
 	@mv _udivdi3.o build/obj/
 
 
-build/instance.yaml: config.yaml
-	@echo "> ruby generate"
-	@ruby generate
+# config
+
+build/config.yml: config.yml
+	@echo "> ruby config.yml"
+	@ruby generate $< $@
+
+# cleaning
 
 clean:
 	@-rm -Rf build
+
+# creating directories
+
+directories:
+	@$(foreach dir,$(DIRECTORIES),$(shell mkdir -p build/src/$(dir)))
+	@$(foreach dir,$(DIRECTORIES),$(shell mkdir -p build/obj/$(dir)))
+	@mkdir -p build/src/x86/shared build/src/x64/shared
+	@mkdir -p build/out
