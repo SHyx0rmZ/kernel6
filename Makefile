@@ -61,13 +61,13 @@ build/out/loader: build/obj/payload build/obj/_udivdi3.o $(OBJECTS_LOADER) build
 
 # template instantiation
 
-build/src/shared/%.hpp: src/shared/%.hpp build/config.yml
+build/src/shared/%.hpp: src/shared/%.hpp build/config.yml shared instance
 	@echo "> ruby $(patsubst src/%,%,$<)"
 	@ruby instance build/config.yml $< $@
 	@ruby shared amd64 $@ $(patsubst build/src/%,build/src/x64/%,$(patsubst %.hpp, %.x64.hpp, $@))
 	@ruby shared i386 $@ $(patsubst build/src/%,build/src/x86/%,$(patsubst %.hpp, %.x86.hpp, $@))
 
-build/src/%: src/% build/config.yml
+build/src/%: src/% build/config.yml instance
 	@echo "> ruby $(patsubst src/%,%,$<)"
 	@ruby instance build/config.yml $< $@
 
@@ -119,7 +119,7 @@ build/obj/_udivdi3.o:
 
 # config
 
-build/config.yml: config.yml
+build/config.yml: config.yml generate
 	@echo "> ruby config.yml"
 	@ruby generate $< $@
 
