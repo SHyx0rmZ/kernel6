@@ -3,9 +3,11 @@
 
 require "yaml"
 
-y = YAML.load_file "config.yaml"
+exit 1 unless ARGV.size.eql? 2 and File.exists? ARGV[0]
 
-f = File.open "build/instance.yaml", "w"
+y = YAML.load_file ARGV[0]
+
+f = File.open ARGV[1], "w"
 
 if f.closed?
     exit 1

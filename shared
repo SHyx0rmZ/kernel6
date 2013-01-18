@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+# coding: utf-8
+
+unless ARGV.size.eql? 3 and [ "amd64", "i386" ].include? ARGV[0]
+    exit 1
+end
+
+fi = File.open ARGV[1], "r"
+fo = File.open ARGV[2], "w"
+
+if fi.closed? or fo.closed?
+    exit 1
+end
+
+struct = false
+index = 0
+level = 0
+
+if ARGV[0].eql? "i386"
+    fi.lines.each do |line|
+        fo.puts line
+
+        struct = true if line[/\b(struct|class)\b/]
+
+        if struct
+            level += line.scan(/\{/).size
+            level -= line.scan(/\}/).size
+
+            if line[/\*|&/]
+                fo.puts "  /* ruby */ void *_shared_reserved_#{index};"
+
+                index += 1
+            end
+
+            struct = false if level.eql? 0 and line[/;/]
+        end
+    end
+else
+    fi.lines.each do |line|
+        fo.puts line
+    end
+end
+
+fi.close
+fo.close
