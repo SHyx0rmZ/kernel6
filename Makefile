@@ -64,8 +64,8 @@ build/out/loader: build/obj/payload build/obj/_udivdi3.o $(OBJECTS_LOADER) build
 build/src/shared/%.hpp: src/shared/%.hpp build/config.yml shared instance
 	@echo "> ruby $(patsubst src/%,%,$<)"
 	@ruby instance build/config.yml $< $@
-	@ruby shared amd64 $@ $(patsubst build/src/%,build/src/x64/%,$(patsubst %.hpp, %.x64.hpp, $@))
-	@ruby shared i386 $@ $(patsubst build/src/%,build/src/x86/%,$(patsubst %.hpp, %.x86.hpp, $@))
+	@ruby shared amd64 $@ $(patsubst build/src/shared/%,build/src/shared/x64/%,$@)
+	@ruby shared i386 $@ $(patsubst build/src/shared/%,build/src/shared/x86/%,$@)
 
 build/src/%: src/% build/config.yml instance
 	@echo "> ruby $(patsubst src/%,%,$<)"
@@ -75,39 +75,39 @@ build/src/%: src/% build/config.yml instance
 
 build/obj/kernel/%.cpp.o: build/src/kernel/%.cpp
 	@echo "> g++  $(patsubst build/src/%,%,$<)"
-	@g++ $(CXXFLAGS) -Ibuild/src/kernel -isystem build/src/lib -m64 -c $< -o $@
+	@g++ $(CXXFLAGS) -Ibuild/src/kernel -Ibuild/src/shared/x64 -isystem build/src/lib -m64 -c $< -o $@
 
 build/obj/kernel/%.S.o: build/src/kernel/%.S
 	@echo "> g++  $(patsubst build/src/%,%,$<)"
-	@g++ $(CXXFLAGS) -Ibuild/src/kernel -isystem build/src/lib -m64 -c $< -o $@
+	@g++ $(CXXFLAGS) -Ibuild/src/kernel -Ibuild/src/shared/x64 -isystem build/src/lib -m64 -c $< -o $@
 
 # compilation, loader
 
 build/obj/loader/%.cpp.o: build/src/loader/%.cpp
 	@echo "> g++  $(patsubst build/src/%,%,$<)"
-	@g++ $(CXXFLAGS) -Ibuild/src/loader -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
+	@g++ $(CXXFLAGS) -Ibuild/src/loader -Ibuild/src/shared/x86 -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
 
 build/obj/loader/%.S.o: build/src/loader/%.S
 	@echo "> g++  $(patsubst build/src/%,%,$<)"
-	@g++ $(CXXFLAGS) -Ibuild/src/loader -isystem build/src/lib -m32 -c $< -o $@
+	@g++ $(CXXFLAGS) -Ibuild/src/loader -Ibuild/src/shared/x86 -isystem build/src/lib -m32 -c $< -o $@
 
 # compilation, libnukexx
 
 build/obj/lib/%.x86.cpp.o: build/src/lib/%.cpp
 	@echo "> g++  $(patsubst build/src/%,%,$<)"
-	@g++ $(CXXFLAGS) -Ibuild/src/x86/shared -Ibuild/src/lib -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
+	@g++ $(CXXFLAGS) -Ibuild/src/shared/x86 -Ibuild/src/lib -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
 
 build/obj/lib/%.x86.S.o: build/src/lib/%.S
 	@echo "> g++  $(patsubst build/src/%,%,$<)"
-	@g++ $(CXXFLAGS) -Ibuild/src/x86/shared -Ibuild/src/lib -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
+	@g++ $(CXXFLAGS) -Ibuild/src/shared/x86 -Ibuild/src/lib -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
 
 build/obj/lib/%.x64.cpp.o: build/src/lib/%.cpp
 	@echo "> g++  $(patsubst build/src/%,%,$<)"
-	@g++ $(CXXFLAGS) -Ibuild/src/x64/shared -Ibuild/src/lib -isystem build/src/lib -m64 -c $< -o $@
+	@g++ $(CXXFLAGS) -Ibuild/src/shared/x64 -Ibuild/src/lib -isystem build/src/lib -m64 -c $< -o $@
 
 build/obj/lib/%.x64.S.o: build/src/lib/%.S
 	@echo "> g++  $(patsubst build/src/%,%,$<)"
-	@g++ $(CXXFLAGS) -Ibuild/src/x64/shared -Ibuild/src/lib -isystem build/src/lib -m64 -c $< -o $@
+	@g++ $(CXXFLAGS) -Ibuild/src/shared/x64 -Ibuild/src/lib -isystem build/src/lib -m64 -c $< -o $@
 
 # extraction of 64 bit arithmetics
 
@@ -133,5 +133,5 @@ clean:
 directories:
 	@$(foreach dir,$(DIRECTORIES),$(shell mkdir -p build/src/$(dir)))
 	@$(foreach dir,$(DIRECTORIES),$(shell mkdir -p build/obj/$(dir)))
-	@mkdir -p build/src/x86/shared build/src/x64/shared
+	@mkdir -p build/src/shared/x86 build/src/shared/x64
 	@mkdir -p build/out
