@@ -5,6 +5,7 @@ DIRECTORIES = kernel loader lib shared
 SOURCES_KERNEL = $(wildcard src/kernel/*.cpp) $(wildcard src/kernel/*.S)
 SOURCES_LOADER = $(wildcard src/loader/*.cpp) $(wildcard src/loader/*.S)
 SOURCES_LIBNUKEXX = $(wildcard src/lib/*.cpp) $(wildcard src/lib/*.S)
+SOURCES_SHARED = $(wildcard src/shared/*.cpp) $(wildcard src/shared/*.S)
 HEADERS_KERNEL = $(wildcard src/kernel/*.hpp)
 HEADERS_LOADER = $(wildcard src/loader/*.hpp)
 HEADERS_LIBNUKEXX = $(patsubst %.cpp, , $(patsubst %.S, , $(wildcard src/lib/*)))
@@ -13,9 +14,11 @@ OBJECTS_KERNEL = $(patsubst src/%.cpp, build/obj/%.cpp.o, $(patsubst src/%.S, bu
 OBJECTS_LOADER = $(patsubst src/%.cpp, build/obj/%.cpp.o, $(patsubst src/%.S, build/obj/%.S.o, $(SOURCES_LOADER)))
 OBJECTS_LIBNUKEXX_X86 = $(patsubst src/%.cpp, build/obj/%.x86.cpp.o, $(patsubst src/%.S, build/obj/%.x86.S.o, $(SOURCES_LIBNUKEXX)))
 OBJECTS_LIBNUKEXX_X64 = $(patsubst src/%.cpp, build/obj/%.x64.cpp.o, $(patsubst src/%.S, build/obj/%.x64.S.o, $(SOURCES_LIBNUKEXX)))
-SOURCES = $(SOURCES_KERNEL) $(SOURCES_LOADER) $(SOURCES_LIBNUKEXX)
+OBJECTS_SHARED_X86 = $(patsubst src/%.cpp, build/obj/%.x86.cpp.o, $(patsubst src/%.S, build/obj/%.x86.S.o, $(SOURCES_SHARED)))
+OBJECTS_SHARED_X64 = $(patsubst src/%.cpp, build/obj/%.x64.cpp.o, $(patsubst src/%.S, build/obj/%.x64.S.o, $(SOURCES_SHARED)))
+SOURCES = $(SOURCES_KERNEL) $(SOURCES_LOADER) $(SOURCES_LIBNUKEXX) $(SOURCES_SHARED)
 HEADERS = $(HEADERS_KERNEL) $(HEADERS_LOADER) $(HEADERS_LIBNUKEXX) $(HEADERS_SHARED)
-OBJECTS = $(OBJECTS_KERNEL) $(OBJECTS_LOADER) $(OBJECTS_LIBNUKEXX_X86) $(OBJECTS_LIBNUKEXX_X64)
+OBJECTS = $(OBJECTS_KERNEL) $(OBJECTS_LOADER) $(OBJECTS_LIBNUKEXX_X86) $(OBJECTS_LIBNUKEXX_X64) $(OBJECTS_SHARED_X86) $(OBJECTS_SHARED_X64)
 SCRIPTS = $(wildcard src/*.ld)
 
 .PHONY: all clean directories
@@ -39,7 +42,7 @@ build/out/libnukexx.x64.a: $(OBJECTS_LIBNUKEXX_X64)
 
 # binaries, kernel
 
-build/out/kernel: $(OBJECTS_KERNEL) build/out/libnukexx.x64.a build/src/script_kernel.ld
+build/out/kernel: $(OBJECTS_KERNEL) $(OBJECTS_SHARED_X64) build/out/libnukexx.x64.a build/src/script_kernel.ld
 	@echo "> ld   kernel"
 	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_kernel.ld
 
@@ -55,7 +58,7 @@ build/obj/payload: build/out/kernel build/src/payload.S
 	@echo "> g++  $(patsubst build/obj/%, %, $@)"
 	@g++ $(CXXFLAGS) -m32 -c build/src/payload.S -o $@
 
-build/out/loader: build/obj/payload build/obj/_udivdi3.o $(OBJECTS_LOADER) build/out/libnukexx.x86.a build/src/script_loader.ld
+build/out/loader: build/obj/payload build/obj/_udivdi3.o $(OBJECTS_LOADER) $(OBJECTS_SHARED_X86) build/out/libnukexx.x86.a build/src/script_loader.ld
 	@echo "> ld   loader"
 	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_loader.ld
 
@@ -107,6 +110,24 @@ build/obj/lib/%.x64.cpp.o: build/src/lib/%.cpp
 
 build/obj/lib/%.x64.S.o: build/src/lib/%.S
 	@echo "> g++  $(patsubst build/src/%,%,$<)"
+	@g++ $(CXXFLAGS) -Ibuild/src/shared/x64 -Ibuild/src/lib -isystem build/src/lib -m64 -c $< -o $@
+
+# compilation, shared
+
+build/obj/shared/%.x86.cpp.o: build/src/shared/%.cpp
+	@echo "> g++ $(patsubst build/src/%,%,$<)"
+	@g++ $(CXXFLAGS) -Ibuild/src/shared/x86 -Ibuild/src/lib -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
+
+build/obj/shared/%.x86.S.o: build/src/shared/%.S
+	@echo "> g++ $(patsubst build/src/%,%,$<)"
+	@g++ $(CXXFLAGS) -Ibuild/src/shared/x86 -Ibuild/src/lib -isystem build/src/lib -m32 -fno-exceptions -c $< -o $@
+
+build/obj/shared/%.x64.cpp.o: build/src/shared/%.cpp
+	@echo "> g++ $(patsubst build/src/%,%,$<)"
+	@g++ $(CXXFLAGS) -Ibuild/src/shared/x64 -Ibuild/src/lib -isystem build/src/lib -m64 -c $< -o $@
+
+build/obj/shared/%.x64.S.o: build/src/shared/%.S
+	@echo "> g++ $(patsubst build/src/%,%,$<)"
 	@g++ $(CXXFLAGS) -Ibuild/src/shared/x64 -Ibuild/src/lib -isystem build/src/lib -m64 -c $< -o $@
 
 # extraction of 64 bit arithmetics
