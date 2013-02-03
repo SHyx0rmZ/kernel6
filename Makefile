@@ -58,7 +58,7 @@ build/obj/payload: build/out/kernel build/src/payload.S
 	@echo "> g++  $(patsubst build/obj/%, %, $@)"
 	@g++ $(CXXFLAGS) -m32 -c build/src/payload.S -o $@
 
-build/out/loader: build/obj/payload build/obj/_udivdi3.o $(OBJECTS_LOADER) $(OBJECTS_SHARED_X86) build/out/libnukexx.x86.a build/src/script_loader.ld
+build/out/loader: build/obj/payload build/obj/_udivdi3.o build/obj/_umoddi3.o $(OBJECTS_LOADER) $(OBJECTS_SHARED_X86) build/out/libnukexx.x86.a build/src/script_loader.ld
 	@echo "> ld   loader"
 	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_loader.ld
 
@@ -136,6 +136,11 @@ build/obj/_udivdi3.o:
 	@echo "> ar   $(patsubst build/obj/%,%,$@)"
 	@ar -x $$(g++ -m32 --print-libgcc-file-name) _udivdi3.o
 	@mv _udivdi3.o build/obj/
+
+build/obj/_umoddi3.o:
+	@echo "> ar   $(patsubst build/obj/%,%,$@)"
+	@ar -x $$(g++ -m32 --print-libgcc-file-name) _umoddi3.o
+	@mv _umoddi3.o build/obj/
 
 
 # config
