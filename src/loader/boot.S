@@ -100,6 +100,7 @@ loader_switch_to_protected_mode:
     movw %cx, %es
     movw %cx, %ss
 
+    push %ebx
     call loader_bootstrap
 
 .local loader_idle
