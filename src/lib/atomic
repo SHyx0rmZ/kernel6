@@ -1,0 +1,289 @@
+#ifndef _LIBNUKEXX_ATOMIC_
+#define _LIBNUKEXX_ATOMIC_
+
+#define ATOMIC_VAR_INIT(x) { (x) }
+
+namespace std
+{
+    enum memory_order
+    {
+        memory_order_relaxed,
+        memory_order_consume,
+        memory_order_acquire,
+        memory_order_release,
+        memory_order_acq_rel,
+        memory_order_seq_cst
+    };
+
+    template <typename T>
+    struct __atomic_helper
+    {
+        T _value;
+
+        __atomic_helper() noexcept = default;
+
+        constexpr __atomic_helper(T desired) noexcept : _value(desired)
+        {
+        }
+
+        __atomic_helper(const __atomic_helper &) = delete;
+
+        T operator=(T desired) noexcept
+        {
+            store(desired);
+
+            return desired;
+        }
+
+        T operator=(T desired) volatile noexcept
+        {
+            store(desired);
+
+            return desired;
+        }
+
+        __atomic_helper &operator=(const __atomic_helper &) = delete;
+        __atomic_helper &operator=(const __atomic_helper &) volatile = delete;
+
+        bool is_lock_free() const
+        {
+            return __atomic_is_lock_free(sizeof(T), &_value);
+        }
+
+        bool is_lock_free() const volatile
+        {
+            return __atomic_is_lock_free(sizeof(T), &_value);
+        }
+
+        void store(T desired, memory_order = memory_order_seq_cst) noexcept
+        {
+            __atomic_store_n(&_value, desired, __ATOMIC_SEQ_CST);
+        }
+
+        void store(T desired, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            __atomic_store_n(&_value, desired, __ATOMIC_SEQ_CST);
+        }
+
+        T load(memory_order = memory_order_seq_cst) const noexcept
+        {
+            return __atomic_load_n(&_value, __ATOMIC_SEQ_CST);
+        }
+
+        T load(memory_order = memory_order_seq_cst) const volatile noexcept
+        {
+            return __atomic_load_n(&_value, __ATOMIC_SEQ_CST);
+        }
+
+        operator T() const noexcept
+        {
+            return load();
+        }
+
+        operator T() const volatile noexcept
+        {
+            return load();
+        }
+
+        T exchange(T desired, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_exchange_n(&_value, desired, __ATOMIC_SEQ_CST);
+        }
+
+        T exchange(T desired, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_exchange_n(&_value, desired, __ATOMIC_SEQ_CST);
+        }
+
+        bool compare_exchange_weak(T &expected, T desired, memory_order, memory_order) noexcept
+        {
+            return __atomic_compare_exchange_n(&_value, &expected, desired, true, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        }
+
+        bool compare_exchange_weak(T &expected, T desired, memory_order, memory_order) volatile noexcept
+        {
+            return __atomic_compare_exchange_n(&_value, &expected, desired, true, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        }
+
+        bool compare_exchange_weak(T &expected, T desired, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_compare_exchange_n(&_value, &expected, desired, true, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        }
+
+        bool compare_exchange_weak(T &expected, T desired, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_compare_exchange_n(&_value, &expected, desired, true, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        }
+
+        bool compare_exchange_strong(T &expected, T desired, memory_order, memory_order) noexcept
+        {
+            return __atomic_compare_exchange_n(&_value, &expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        }
+
+        bool compare_exchange_strong(T &expected, T desired, memory_order, memory_order) volatile noexcept
+        {
+            return __atomic_compare_exchange_n(&_value, &expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        }
+
+        bool compare_exchange_strong(T &expected, T desired, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_compare_exchange_n(&_value, &expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        }
+
+        bool compare_exchange_strong(T &expected, T desired, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_compare_exchange_n(&_value, &expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_add(T arg, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_fetch_add(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_add(T arg, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_fetch_add(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_sub(T arg, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_fetch_sub(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_sub(T arg, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_fetch_sub(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_and(T arg, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_fetch_and(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_and(T arg, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_fetch_and(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_or(T arg, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_fetch_or(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_or(T arg, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_fetch_or(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_xor(T arg, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_fetch_xor(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_xor(T arg, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_fetch_xor(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T operator++() noexcept
+        {
+            return fetch_add(1) + 1;
+        }
+
+        T operator++() volatile noexcept
+        {
+            return fetch_add(1) + 1;
+        }
+
+        T operator++(int) noexcept
+        {
+            return fetch_add(1);
+        }
+
+        T operator++(int) volatile noexcept
+        {
+            return fetch_add(1);
+        }
+
+        T operator--() noexcept
+        {
+            return fetch_sub(1) - 1;
+        }
+
+        T operator--() volatile noexcept
+        {
+            return fetch_sub(1) - 1;
+        }
+
+        T operator--(int) noexcept
+        {
+            return fetch_sub(1);
+        }
+
+        T operator--(int) volatile noexcept
+        {
+            return fetch_sub(1);
+        }
+
+        T operator+=(T arg) noexcept
+        {
+            return fetch_add(arg);
+        }
+
+        T operator+=(T arg) volatile noexcept
+        {
+            return fetch_add(arg);
+        }
+
+        T operator-=(T arg) noexcept
+        {
+            return fetch_sub(arg);
+        }
+
+        T operator-=(T arg) volatile noexcept
+        {
+            return fetch_sub(arg);
+        }
+
+        T operator&=(T arg) noexcept
+        {
+            return fetch_and(arg);
+        }
+
+        T operator&=(T arg) volatile noexcept
+        {
+            return fetch_and(arg);
+        }
+
+        T operator|=(T arg) noexcept
+        {
+            return fetch_or(arg);
+        }
+
+        T operator|=(T arg) volatile noexcept
+        {
+            return fetch_or(arg);
+        }
+
+        T operator^=(T arg) noexcept
+        {
+            return fetch_xor(arg);
+        }
+
+        T operator^=(T arg) volatile noexcept
+        {
+            return fetch_xor(arg);
+        }
+    };
+
+    template <typename T>
+    struct atomic : __atomic_helper<T>
+    {
+    };
+
+    // TODO implement
+    template <typename T>
+    struct atomic<T *>;
+}
+
+#endif
