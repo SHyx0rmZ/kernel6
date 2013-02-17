@@ -1,6 +1,8 @@
 #ifndef _LIBNUKEXX_ATOMIC_
 #define _LIBNUKEXX_ATOMIC_
 
+#include <cstddef>
+
 #define ATOMIC_VAR_INIT(x) { (x) }
 
 namespace std
@@ -135,26 +137,6 @@ namespace std
             return __atomic_compare_exchange_n(&_value, &expected, desired, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
         }
 
-        T fetch_add(T arg, memory_order = memory_order_seq_cst) noexcept
-        {
-            return __atomic_fetch_add(&_value, arg, __ATOMIC_SEQ_CST);
-        }
-
-        T fetch_add(T arg, memory_order = memory_order_seq_cst) volatile noexcept
-        {
-            return __atomic_fetch_add(&_value, arg, __ATOMIC_SEQ_CST);
-        }
-
-        T fetch_sub(T arg, memory_order = memory_order_seq_cst) noexcept
-        {
-            return __atomic_fetch_sub(&_value, arg, __ATOMIC_SEQ_CST);
-        }
-
-        T fetch_sub(T arg, memory_order = memory_order_seq_cst) volatile noexcept
-        {
-            return __atomic_fetch_sub(&_value, arg, __ATOMIC_SEQ_CST);
-        }
-
         T fetch_and(T arg, memory_order = memory_order_seq_cst) noexcept
         {
             return __atomic_fetch_and(&_value, arg, __ATOMIC_SEQ_CST);
@@ -183,6 +165,62 @@ namespace std
         T fetch_xor(T arg, memory_order = memory_order_seq_cst) volatile noexcept
         {
             return __atomic_fetch_xor(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T operator&=(T arg) noexcept
+        {
+            return fetch_and(arg);
+        }
+
+        T operator&=(T arg) volatile noexcept
+        {
+            return fetch_and(arg);
+        }
+
+        T operator|=(T arg) noexcept
+        {
+            return fetch_or(arg);
+        }
+
+        T operator|=(T arg) volatile noexcept
+        {
+            return fetch_or(arg);
+        }
+
+        T operator^=(T arg) noexcept
+        {
+            return fetch_xor(arg);
+        }
+
+        T operator^=(T arg) volatile noexcept
+        {
+            return fetch_xor(arg);
+        }
+    };
+
+    template <typename T>
+    struct atomic : __atomic_helper<T>
+    {
+        using __atomic_helper<T>::_value;
+
+        T fetch_add(T arg, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_fetch_add(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_add(T arg, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_fetch_add(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_sub(T arg, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_fetch_sub(&_value, arg, __ATOMIC_SEQ_CST);
+        }
+
+        T fetch_sub(T arg, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_fetch_sub(&_value, arg, __ATOMIC_SEQ_CST);
         }
 
         T operator++() noexcept
@@ -244,46 +282,93 @@ namespace std
         {
             return fetch_sub(arg);
         }
-
-        T operator&=(T arg) noexcept
-        {
-            return fetch_and(arg);
-        }
-
-        T operator&=(T arg) volatile noexcept
-        {
-            return fetch_and(arg);
-        }
-
-        T operator|=(T arg) noexcept
-        {
-            return fetch_or(arg);
-        }
-
-        T operator|=(T arg) volatile noexcept
-        {
-            return fetch_or(arg);
-        }
-
-        T operator^=(T arg) noexcept
-        {
-            return fetch_xor(arg);
-        }
-
-        T operator^=(T arg) volatile noexcept
-        {
-            return fetch_xor(arg);
-        }
     };
 
     template <typename T>
-    struct atomic : __atomic_helper<T>
+    struct atomic<T *> : public __atomic_helper<T *>
     {
-    };
+        using __atomic_helper<T *>::_value;
 
-    // TODO implement
-    template <typename T>
-    struct atomic<T *>;
+        T *fetch_add(std::ptrdiff_t arg, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_fetch_add(&_value, arg * sizeof(T), __ATOMIC_SEQ_CST);
+        }
+
+        T *fetch_add(std::ptrdiff_t arg, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_fetch_add(&_value, arg * sizeof(T), __ATOMIC_SEQ_CST);
+        }
+
+        T *fetch_sub(std::ptrdiff_t arg, memory_order = memory_order_seq_cst) noexcept
+        {
+            return __atomic_fetch_sub(&_value, arg * sizeof(T), __ATOMIC_SEQ_CST);
+        }
+
+        T *fetch_sub(std::ptrdiff_t arg, memory_order = memory_order_seq_cst) volatile noexcept
+        {
+            return __atomic_fetch_sub(&_value, arg * sizeof(T), __ATOMIC_SEQ_CST);
+        }
+
+        T *operator++() noexcept
+        {
+            return fetch_add(1) + 1;
+        }
+
+        T *operator++() volatile noexcept
+        {
+            return fetch_add(1) + 1;
+        }
+
+        T *operator++(int) noexcept
+        {
+            return fetch_add(1);
+        }
+
+        T *operator++(int) volatile noexcept
+        {
+            return fetch_add(1);
+        }
+
+        T *operator--() noexcept
+        {
+            return fetch_sub(1) - 1;
+        }
+
+        T *operator--() volatile noexcept
+        {
+            return fetch_sub(1) - 1;
+        }
+
+        T *operator--(int) noexcept
+        {
+            return fetch_sub(1);
+        }
+
+        T *operator--(int) volatile noexcept
+        {
+            return fetch_sub(1);
+        }
+
+        T *operator+=(std::ptrdiff_t arg) noexcept
+        {
+            return fetch_add(arg);
+        }
+
+        T *operator+=(std::ptrdiff_t arg) volatile noexcept
+        {
+            return fetch_add(arg);
+        }
+
+        T *operator-=(std::ptrdiff_t arg) noexcept
+        {
+            return fetch_sub(arg);
+        }
+
+        T *operator-=(std::ptrdiff_t arg) volatile noexcept
+        {
+            return fetch_sub(arg);
+        }
+    };
 }
 
 #endif
