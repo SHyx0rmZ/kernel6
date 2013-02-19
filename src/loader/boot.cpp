@@ -1,9 +1,10 @@
 #include "gdt.hpp"
 #include "idt.hpp"
+#include "multiboot.hpp"
 #include "console.hpp"
 #include "smp.hpp"
 
-extern "C" void loader_bootstrap(void *)
+extern "C" void loader_bootstrap(MultibootInfo *info)
 {
     gdt_init();
     idt_init();
