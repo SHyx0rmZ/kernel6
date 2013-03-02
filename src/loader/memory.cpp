@@ -1,5 +1,4 @@
 #include <cstdint>
-#include <cstddef>
 
 #include "memory.hpp"
 
@@ -18,11 +17,12 @@ void memory_init(MultibootInfo *info)
     MultibootMemory *memory_begin = reinterpret_cast<MultibootMemory *>(info->mmap_addr);
     MultibootMemory *memory_end = reinterpret_cast<MultibootMemory *>(static_cast<std::uintptr_t>(info->mmap_addr) + info->mmap_length);
 
+    // one additional used block for memory management
     unsigned int num_free = 0, num_used = 1;
 
     for (MultibootMemory *memory = memory_begin; memory < memory_end; memory = reinterpret_cast<MultibootMemory *>(reinterpret_cast<std::uintptr_t>(memory) + memory->size + 4))
     {
-        if (memory->type == 1)
+        if (memory->type == MEMORY_TYPE_FREE)
             num_free++;
         else
             num_used++;
@@ -34,7 +34,7 @@ void memory_init(MultibootInfo *info)
     for (MultibootMemory *memory = memory_begin; memory < memory_end; memory = reinterpret_cast<MultibootMemory *>(reinterpret_cast<std::uintptr_t>(memory) + memory->size + 4))
     {
         // find highest memory block below 4 GiB that has enough space for the initial memory nodes
-        if (memory->type == 1 && memory->address > max && memory->length > struct_size && memory->address + struct_size < -1U)
+        if (memory->type == MEMORY_TYPE_FREE && memory->address > max && memory->length > struct_size && memory->address + struct_size < -1U)
             max = memory->address;
     }
 
@@ -44,7 +44,7 @@ void memory_init(MultibootInfo *info)
 
     for (MultibootMemory *memory = memory_begin; memory < memory_end; memory = reinterpret_cast<MultibootMemory *>(reinterpret_cast<std::uintptr_t>(memory) + memory->size + 4))
     {
-        if (memory->type == 1)
+        if (memory->type == MEMORY_TYPE_FREE)
         {
             if (memory->address == max)
             {
@@ -69,7 +69,7 @@ void memory_init(MultibootInfo *info)
 
     for (MultibootMemory *memory = memory_begin; memory < memory_end; memory = reinterpret_cast<MultibootMemory *>(reinterpret_cast<std::uintptr_t>(memory) + memory->size + 4))
     {
-        if (memory->type != 1)
+        if (memory->type != MEMORY_TYPE_FREE)
         {
             node->address = memory->address;
             node->size = memory->length;
