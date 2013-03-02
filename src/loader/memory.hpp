@@ -12,5 +12,7 @@
 #define MEMORY_TYPE_BAD         5
 
 void memory_init(MultibootInfo *info);
+void *memory_alloc(std::size_t size);
+void memory_free(void *address);
 
 #endif

@@ -80,3 +80,63 @@ void memory_init(MultibootInfo *info)
 
     (node - 1)->next = nullptr;
 }
+
+void *memory_alloc(std::size_t size)
+{
+    MemoryNode empty;
+    MemoryNode *node = &empty;
+
+    empty.address = 0;
+    size += sizeof(MemoryNode);
+
+    for (MemoryNode *n = list_free; n; n = n->next)
+    {
+        if (n->size > size && n->address > node->address && n->address + size < -1U)
+            node = n;
+    }
+
+    if (&empty == node)
+        return nullptr;
+    else
+    {
+        MemoryNode *used = reinterpret_cast<MemoryNode *>(static_cast<std::uint32_t>(node->address));
+
+        used->address = node->address + sizeof(MemoryNode);
+        used->size = size - sizeof(MemoryNode);
+        used->next = list_used;
+        list_used = used;
+
+        node->address += size;
+        node->size -= size;
+
+        return reinterpret_cast<void *>(static_cast<std::uint32_t>(used->address));
+    }
+}
+
+void memory_free(void *address)
+{
+    if (list_used->address == reinterpret_cast<std::uint64_t>(address))
+    {
+        MemoryNode *free = list_used;
+
+        list_used = free->next;
+        free->next = list_free;
+        list_free = free;
+    }
+    else
+    {
+        for (MemoryNode *n = list_used; n->next; n = n->next)
+        {
+            if (n->next->address == reinterpret_cast<std::uint64_t>(address))
+            {
+                MemoryNode *free = n->next;
+
+                n->next = free->next;
+                free->next = list_free;
+                list_free = free;
+
+                break;
+            }
+        }
+    }
+}
