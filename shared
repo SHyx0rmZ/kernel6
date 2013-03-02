@@ -17,7 +17,7 @@ index = 0
 level = 0
 
 if ARGV[0].eql? "i386"
-    fi.lines.each do |line|
+    fi.each_line do |line|
         fo.puts line
 
         struct = true if line[/\b(struct|class)\b/]
@@ -36,7 +36,7 @@ if ARGV[0].eql? "i386"
         end
     end
 else
-    fi.lines.each do |line|
+    fi.each_line do |line|
         fo.puts line
     end
 end
