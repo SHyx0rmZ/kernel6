@@ -54,12 +54,63 @@ Console &Console::operator<<(const char *const str)
 
 //Console &operator<<(const std::string &str)
 
-Console &Console::operator<<(std::uint64_t)
+Console &Console::operator<<(std::uint8_t num)
 {
+    return *this << static_cast<std::uint64_t>(num);
+}
+
+Console &Console::operator<<(std::uint16_t num)
+{
+    return *this << static_cast<std::uint64_t>(num);
+}
+
+Console &Console::operator<<(std::uint32_t num)
+{
+    return *this << static_cast<std::uint64_t>(num);
+}
+
+Console &Console::operator<<(std::uint64_t num)
+{
+    char string[21];
+
+    string[20] = '\0';
+
+    char *p = &string[20];
+
+    if (num)
+        for (char rest = num % 10; num; num /= 10, rest = num % 10)
+        {
+            *(--p) = rest + '0';
+        }
+    else
+        *(--p) = '0';
+
+    return *this << p;
+}
+
+Console &Console::operator<<(const void *const ptr)
+{
+    char c[3] = { '0', 'x', '\0' };
+
+    *this << c;
+
+    for (int i = sizeof(void *); i; --i)
+    {
+        c[0] = (reinterpret_cast<const char *const>(&ptr)[i - 1] >> 4) & 15;
+        c[1] = reinterpret_cast<const char *const>(&ptr)[i - 1] & 15;
+
+        c[0] += c[0] > 9 ? '7' : '0';
+        c[1] += c[1] > 9 ? '7' : '0';
+
+        *this << c;
+    }
+
     return *this;
 }
 
-Console &Console::operator<<(const void *const)
+Console &Console::operator<<(const char c)
 {
-    return *this;
+    char string[] = { c, '\0' };
+
+    return *this << string;
 }
