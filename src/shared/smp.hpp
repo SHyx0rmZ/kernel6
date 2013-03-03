@@ -4,6 +4,12 @@
 #include <cstdint>
 #include <cstddef>
 
+#define SMP_ENTRY_PROCESSOR     0
+#define SMP_ENTRY_BUS           1
+#define SMP_ENTRY_IOAPIC        2
+#define SMP_ENTRY_IO_ASSIGN     3
+#define SMP_ENTRY_LOCAL_ASSIGN  4
+
 namespace smp
 {
     struct Floating
