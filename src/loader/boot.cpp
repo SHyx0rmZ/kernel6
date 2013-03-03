@@ -3,6 +3,7 @@
 #include "multiboot.hpp"
 #include "console.hpp"
 #include "smp.hpp"
+#include "memory.hpp"
 
 extern "C" void loader_bootstrap(MultibootInfo *info)
 {
@@ -15,6 +16,8 @@ extern "C" void loader_bootstrap(MultibootInfo *info)
     Console cout;
 
     cout << "Hello, world!";
+
+    memory_init(info);
 
     smp::Floating *floating = smp::FindFloating(0, 0x400);
 
