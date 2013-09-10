@@ -4,3 +4,5 @@ kernel_address : 0xffffffff80000000
 loader_address : 0x00100000
 loader_entry : loader_entry
 loader_stack_size : 0x4000
+
+smp_address : 0x00006000

@@ -40,6 +40,20 @@ build/out/libnukexx.x64.a: $(OBJECTS_LIBNUKEXX_X64)
 	@echo "> ar   libnukexx.x64.a"
 	@ar -rc build/out/libnukexx.x64.a $^
 
+# smpinit, needs to be included in loader
+
+build/obj/smpinit.x64.S.o: build/src/smpinit.S
+	@echo "> g++  $(patsubst build/out/%, %, $@)"
+	@g++ $(CXXFLAGS) -m64 -c $< -o $@
+
+build/out/smpinit: build/obj/smpinit.x64.S.o
+	@echo "> ld   smpinit"
+	@ld $(LDFLAGS) -o $@ $^ -T build/src/script_smpinit.ld
+
+build/obj/loader/smpinit.x86.S.o: build/out/smpinit build/src/loader/smpinit.S
+	@echo "> g++  loader/smpinit.S"
+	@g++ $(CXXFLAGS) -Ibuild/src/loader -Ibuild/src/shared/x86 -isystem build/src/lib -m32 -c build/src/loader/smpinit.S -o $@
+
 # binaries, kernel
 
 build/out/kernel: $(OBJECTS_KERNEL) $(OBJECTS_SHARED_X64) build/out/libnukexx.x64.a build/src/script_kernel.ld
