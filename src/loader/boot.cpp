@@ -4,6 +4,7 @@
 #include "console.hpp"
 #include "smp.hpp"
 #include "memory.hpp"
+#include "pic.hpp"
 
 extern "C" void loader_bootstrap(MultibootInfo *info)
 {
@@ -12,6 +13,8 @@ extern "C" void loader_bootstrap(MultibootInfo *info)
 
     gdt_load();
     idt_load();
+
+    pic::Init();
 
     Console cout;
 
