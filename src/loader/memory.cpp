@@ -93,23 +93,22 @@ void memory_init(MultibootInfo *info)
                 MemoryNode *split = reinterpret_cast<MemoryNode *>(memory_alloc(sizeof(MemoryNode)));
 
                 split->address = reinterpret_cast<std::uintptr_t>(kernel_area_end);
-                split->size = n->size;
-                n->size = reinterpret_cast<std::uintptr_t>(kernel_area_begin) - n->address;
-                split->size = split->size - n->size - (reinterpret_cast<std::uintptr_t>(kernel_area_end) - reinterpret_cast<std::uintptr_t>(kernel_area_begin));
+                split->size = n->size - (reinterpret_cast<std::uintptr_t>(kernel_area_begin) - n->address) - (reinterpret_cast<std::uintptr_t>(kernel_area_end) - reinterpret_cast<std::uintptr_t>(kernel_area_begin));
                 split->next = list_free;
+
                 list_free = split;
 
                 num_free++;
+
             }
-            else
-            {
-                n->size = reinterpret_cast<std::uintptr_t>(kernel_area_begin) - n->address;
-            }
+
+            n->size = reinterpret_cast<std::uintptr_t>(kernel_area_begin) - n->address;
         }
         else
         {
             if (n->address < reinterpret_cast<std::uintptr_t>(kernel_area_end) && n->address + n->size > reinterpret_cast<std::uintptr_t>(kernel_area_end))
             {
+                n->size -= reinterpret_cast<std::uintptr_t>(kernel_area_end) - n->address;
                 n->address = reinterpret_cast<std::uintptr_t>(kernel_area_end);
             }
         }
