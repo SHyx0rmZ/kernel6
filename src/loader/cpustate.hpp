@@ -21,8 +21,6 @@ struct cpustate
     std::uint32_t eip;
     std::uint32_t cs;
     std::uint32_t eflags;
-    std::uint32_t esp;
-    std::uint32_t ss;
 } __attribute__((packed));
 
 #endif
