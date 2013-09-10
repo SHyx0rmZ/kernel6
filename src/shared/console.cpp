@@ -12,6 +12,12 @@
 
 Console::Console()
 {
+    std::memset(reinterpret_cast<void *>(CONSOLE_AREA), 0, 25 * 160);
+
+    this->video = reinterpret_cast<std::uint16_t *>(CONSOLE_AREA);
+
+    *this << "kernel6 >>" << endl;
+
     this->video = reinterpret_cast<std::uint16_t *>(CONSOLE_START);
 }
 
@@ -86,6 +92,29 @@ Console &Console::operator<<(std::uint64_t num)
         *(--p) = '0';
 
     return *this << p;
+}
+
+Console &Console::operator<<(std::int8_t num)
+{
+    return *this << static_cast<std::int64_t>(num);
+}
+
+Console &Console::operator<<(std::int16_t num)
+{
+    return *this << static_cast<std::int64_t>(num);
+}
+
+Console &Console::operator<<(std::int32_t num)
+{
+    return *this << static_cast<std::int64_t>(num);
+};
+
+Console &Console::operator<<(std::int64_t num)
+{
+    if (num < 0)
+        *this << "-";
+
+    return *this << static_cast<std::uint64_t>(num < 0 ? -num : num);
 }
 
 Console &Console::operator<<(const void *const ptr)
