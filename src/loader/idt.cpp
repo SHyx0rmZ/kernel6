@@ -19,6 +19,7 @@ void idt_init()
         idt_set_entry(i, reinterpret_cast<std::uintptr_t>(isr_stub_null), 0x08, 0x8E01);
     }
 
+    idt_set_entry(0, reinterpret_cast<std::uintptr_t>(&isr_stub_0), 0x08, 0x8E01);
     idt_set_entry(1, reinterpret_cast<std::uintptr_t>(&isr_stub_1), 0x08, 0x8E01);
     idt_set_entry(2, reinterpret_cast<std::uintptr_t>(&isr_stub_2), 0x08, 0x8E01);
     idt_set_entry(3, reinterpret_cast<std::uintptr_t>(&isr_stub_3), 0x08, 0x8E01);
