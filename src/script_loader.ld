@@ -5,6 +5,7 @@ ENTRY(<%= config["loader_entry"] %>)
 SECTIONS
 {
     . = <%= config["loader_address"] %>;
+    kernel_area_begin = .;
     .text :
     {
         . = ALIGN(0x10);
@@ -42,4 +43,5 @@ SECTIONS
         *(.loader)
         *(COMMON)
     }
+    kernel_area_end = .;
 }
