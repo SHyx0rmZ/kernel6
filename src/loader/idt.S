@@ -83,10 +83,10 @@ isr_stub_common:
 
     call isr_handler
 
-    movw 4(%eax), %gs
-    movw 8(%eax), %fs
-    movw 12(%eax), %es
-    movw 16(%eax), %ds
+    movw (%eax), %gs
+    movw 4(%eax), %fs
+    movw 8(%eax), %es
+    movw 12(%eax), %ds
 
     addl $16, %eax
     movl %eax, %esp
