@@ -6,6 +6,8 @@
 #include "memory.hpp"
 #include "pic.hpp"
 
+#include <new>
+
 extern "C" void loader_bootstrap(MultibootInfo *info)
 {
     gdt_init();
@@ -18,7 +20,7 @@ extern "C" void loader_bootstrap(MultibootInfo *info)
 
     Console cout;
 
-    cout << "Hello, world!";
+    cout << "Hello, world!" << endl;
 
     memory_init(info);
 
@@ -39,5 +41,24 @@ extern "C" void loader_bootstrap(MultibootInfo *info)
         cout << "SMP not supported!\n";
     }
 
-    while (true);
+    cout << "SMP : " << floating << endl;
+
+    char *memory1 = new char[2041];
+    float *memory2 = new float[17324];
+
+    cout << "MEM1: " << (void*)memory1 << endl;
+    cout << "MEM2: " << memory2 << endl;
+
+    delete[] memory1;
+    delete[] memory2;
+
+    void *memory3 = memory_alloc(371);
+
+    cout << "MEM3: " << memory3 << endl;
+
+    while (true) {
+        char *tmp = new char[1024];
+        //cout << (void*)tmp << endl;
+        delete[] tmp;
+    }
 }

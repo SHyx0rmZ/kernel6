@@ -147,15 +147,23 @@ void *memory_alloc(std::size_t size)
     }
 }
 
+#include "console.hpp"
+
 void memory_free(void *address)
 {
-    if (list_used->address == reinterpret_cast<std::uint64_t>(address))
+    Console cout;
+
+    cout << address << " ";
+
+    if (list_used->address == static_cast<std::uint64_t>(reinterpret_cast<std::uint32_t>(address)))
     {
         MemoryNode *free = list_used;
 
         list_used = free->next;
         free->next = list_free;
         list_free = free;
+
+        cout << "A " << list_used << " " << (void*)list_used->address << " " << (void*)list_used->size;
     }
     else
     {
@@ -168,6 +176,73 @@ void memory_free(void *address)
                 n->next = free->next;
                 free->next = list_free;
                 list_free = free;
+
+                break;
+            }
+        }
+
+        cout << "B";
+    }
+
+    cout << endl;
+}
+
+bool BlockIsHeadOf(MemoryNode *list, void *address)
+{
+    return list->address == static_cast<std::uint64_t>(reinterpret_cast<std::uint32_t>(address));
+}
+
+bool BlockIsSiblingOf(MemoryNode *node, void *address)
+{
+    return node->next && (node->next->address == static_cast<std::uint64_t>(reinterpret_cast<std::uint32_t>(address)));
+}
+
+void MoveHead(MemoryNode *&head, MemoryNode *&list)
+{
+    MemoryNode *move = head;
+
+    head = move->next;
+    move->next = list;
+    list = move;
+}
+
+void MoveSibling(MemoryNode *node, MemoryNode *&list)
+{
+    MemoryNode *move = node->next;
+
+    node->next = move->next;
+    move->next = list;
+    list = move;
+}
+
+MemoryNode *begin(MemoryNode *node)
+{
+    return node;
+}
+
+MemoryNode *end(MemoryNode *node)
+{
+    while (node->next) {
+        node = node->next;
+    }
+
+    return node;
+}
+
+void *memory_alloc2(std::size_t size)
+{
+    (void)size;
+    return nullptr; 
+}
+
+void memory_free2(void *address)
+{
+    if (BlockIsHeadOf(list_used, address)) {
+        MoveHead(list_used, list_free);
+    } else {
+        for (MemoryNode node : list_used) {
+            if (BlockIsSiblingOf(&node, address)) {
+                MoveSibling(&node, list_free);
 
                 break;
             }

@@ -1,0 +1,28 @@
+#ifndef _LIBNUKEXX_NEW_
+#define _LIBNUKEXX_NEW_
+
+#include <cstddef>
+
+#include "memory.hpp"
+
+    void *operator new(std::size_t count)
+    {
+        return memory_alloc(count);
+    }
+
+    void *operator new[](std::size_t count)
+    {
+        return memory_alloc(count);
+    }
+
+    void operator delete(void *ptr)
+    {
+        memory_free(ptr);
+    }
+
+    void operator delete[](void *ptr)
+    {
+        memory_free(ptr);
+    }
+
+#endif
