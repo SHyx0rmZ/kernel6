@@ -249,3 +249,26 @@ void memory_free2(void *address)
         }
     }
 }
+
+void memory_status(std::size_t *free, std::size_t *used)
+{
+    if (free != nullptr)
+    {
+        *free = 0;
+
+        for (MemoryNode *node = list_free; node; node = node->next)
+        {
+            *free += node->size;
+        }
+    }
+
+    if (used != nullptr)
+    {
+        *used = 0;
+
+        for (MemoryNode *node = list_used; node; node = node->next)
+        {
+            *used += node->size;
+        }
+    }
+}

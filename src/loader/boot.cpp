@@ -22,7 +22,12 @@ extern "C" void loader_bootstrap(MultibootInfo *info)
 
     cout << "Hello, world!" << endl;
 
+    std::size_t free, used;
+
     memory_init(info);
+    memory_status(&free, &used);
+
+    cout << "Initialized memory (" << used/1024 << " KiB / " << (used+free)/1024 << " KiB used)" << endl;
 
     smp::Floating *floating = smp::FindFloating(0, 0x400);
 
