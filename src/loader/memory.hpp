@@ -14,5 +14,6 @@
 void memory_init(MultibootInfo *info);
 void *memory_alloc(std::size_t size);
 void memory_free(void *address);
+void memory_status(std::size_t *free, std::size_t *used);
 
 #endif
