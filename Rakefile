@@ -44,7 +44,7 @@ DIRECTORIES.each_value do |path|
     directory(path)
 end
 
-task :default => [ :directories, :tools, :templates]  do |t|
+task :default => [ :directories, :tools, :templates, :compilation ]  do |t|
     puts '> done'
 end
 
@@ -56,7 +56,17 @@ task :directories do
     end
 end
 
-file 'build/config.yml'
+file 'build/config.yml' => [ 'config.yml', 'generate' ] do |f|
+    puts "> ruby config.yml"
+
+    verbose(false) do
+        mkdir_p(File.dirname(f.name))
+        ruby "generate #{f.source} #{f.name}"
+    end
+end
+
+file 'config.yml'
+file 'generate'
 file 'instance'
 file 'shared'
 
@@ -66,7 +76,7 @@ task :templates => TEMPLATES do |t|
 end
 
 rule /^build\/src\/shared\/.*\.hpp$/ => ->(t){ t.pathmap('%{^build/src/,src/}p') } do |t|
-    puts "> ruby s #{t.name}"
+    puts "> ruby #{t.name}"
 
     verbose(false) do
         mkdir_p(t.name.pathmap('%d'))
@@ -87,4 +97,131 @@ rule /^build\/src\/.*$/ => ->(t){ t.pathmap('%{^build/src/,src/}p') } do |t|
     end
 end
 
+task :compilation => 'build/out/kernel6'
 
+file 'build/out/kernel6' => 'build/out/loader' do |f|
+    puts "> cp   kernel6"
+
+    verbose(false) do
+        cp(f.source, f.name)
+    end
+end
+
+file 'build/out/loader' => [ 'build/obj/payload', 'build/obj/_udivdi3.o', 'build/obj/_umoddi3.o', *OBJECTS_LOADER, *OBJECTS_SHARED_X86, 'build/out/libnukexx.x86.a', 'build/src/script_loader.ld' ] do |f|
+    puts "> ld   loader"
+
+    verbose(false) do
+        sh %| ld #{LDFLAGS} -o #{f.name} #{f.sources.join(' ')} -T build/src/script_loader.ld |
+    end
+end
+
+file 'build/obj/payload' => [ 'build/out/kernel', 'build/src/payload.S' ] do |f|
+    puts "> g++  #{f.name.pathmap('%{^build/obj/,}p}')}"
+
+    verbose(false) do
+        sh %| g++ #{CXXFLAGS} -m32 -c build/src/payload.S -o #{f.name} |
+    end
+end
+
+file 'build/obj/_udivdi3.o' do |f|
+    puts "> ar   #{f.name.pathmap('%{^build/obj/,}p')}"
+
+    verbose(false) do
+        sh %| ar -x #{%x| g++ -m32 --print-libgcc-file-name |.strip} _udivdi3.o |
+        mv('_udivdi3.o', 'build/obj/')
+    end
+end
+
+file 'build/obj/_umoddi3.o' do |f|
+    puts "> ar   #{f.name.pathmap('%{,build/obj/}p')}"
+
+    verbose(false) do
+        sh %| ar -x #{%x| g++ -m32 --print-libgcc-file-name |.strip} _umoddi3.o |
+        mv('_umoddi3.o', 'build/obj/')
+    end
+end
+
+rule /^build\/obj\/loader\/.*\.cpp\.o$/ => ->(t){ t.pathmap('%{^build/obj/,build/src/}p').ext('') } do |t|
+    puts "> g++  #{t.source.pathmap('%{^build/src/,}p')}"
+
+    verbose(false) do
+        mkdir_p(t.name.pathmap('%d'))
+        sh %| g++ #{CXXFLAGS} -Ibuild/src/loader -Ibuild/src/shared/x86 -isystem build/src/lib -m32 -fno-exceptions -c #{t.source} -o #{t.name} |
+    end
+end
+
+rule /^build\/obj\/loader\/.*\.S\.o$/ => ->(t){ t.pathmap('%{^build/obj/,build/src/}p').ext('') } do |t|
+    puts "> g++  #{t.source.pathmap('%{^build/src/,}p')}"
+
+    verbose(false) do
+        mkdir_p(t.name.pathmap('%d'))
+        sh %| g++ #{CXXFLAGS} -Ibuild/src/loader -Ibuild/src/shared/x86 -isystem build/src/lib -m32 -fno-exceptions -c #{t.source} -o #{t.name} |
+    end
+end
+
+# compilation, libnukexx
+
+# rule /^build\/obj\/lib\/.*\.x86\.cpp\.o$/ => ->(t){ t.pathmap('%{^build/obj/,build/src/}p').ext('') } do |t|
+#     puts "> g++  #{t.source.pathmap('%{^build/src/,}p')}"
+
+#     verbose(false) do
+#         mkdir_p(t.name.pathmap('%d'))
+#         sh %| g++ #{CXXFLAGS} -Ibuild/src/shared/x86 -Ibuild/src/lib -isystem build/src/lib -m32 -fno-exceptions -c #{t.source} -o #{t.name} |
+#     end
+# end
+
+# compilation, shared
+
+rule /^build\/obj\/(?:lib|shared)\/.*\.x86\.(?:cpp|S)\.o$/ => ->(t){ t.pathmap('%{^build/obj/(.*)\.x86,build/src/\1}p').ext('') } do |t|
+    puts "> g++  #{t.source.pathmap('%{^build/src/,}p')}"
+
+    verbose(false) do
+        mkdir_p(t.name.pathmap('%d'))
+        sh %| g++ #{CXXFLAGS} -Ibuild/src/shared/x86 -Ibuild/src/lib -isystem build/src/lib -m32 -fno-exceptions -c #{t.source} -o #{t.name} |
+    end
+end
+
+rule /^build\/obj\/(?:lib|shared)\/.*\.x64\.(?:cpp|S)\.o$/ => ->(t){ t.pathmap('%{^build/obj/(.*)\.x64,build/src/\1}p').ext('') } do |t|
+    puts "> g++  #{t.source.pathmap('%{^build/src/,}p')}"
+
+    verbose(false) do
+        mkdir_p(t.name.pathmap('%d'))
+        sh %| g++ #{CXXFLAGS} -Ibuild/src/shared/x64 -Ibuild/src/lib -isystem build/src/lib -m64 -c #{t.source} -o #{t.name} |
+    end
+end
+
+file 'build/out/libnukexx.x86.a' => OBJECTS_LIBNUKEXX_X86 do |t|
+    puts "> ar   libnukexx.x86.a"
+
+    verbose(false) do
+        mkdir_p(t.name.pathmap('%d'))
+        sh %| ar -rc #{t.name} #{t.sources.join(' ')} |
+    end
+end
+
+file 'build/out/libnukexx.x64.a' => OBJECTS_LIBNUKEXX_X64 do |t|
+    puts "> ar   libnukexx.x64.a"
+
+    verbose(false) do
+        mkdir_p(t.name.pathmap('%d'))
+        sh %| ar -rc #{t.name} #{t.sources.join(' ')} |
+    end
+end
+
+file 'build/out/kernel' => [ *OBJECTS_KERNEL, *OBJECTS_SHARED_X64, 'build/out/libnukexx.x64.a', 'build/src/script_kernel.ld' ] do |t|
+    puts "> ld   kernel"
+
+    verbose(false) do
+        mkdir_p(t.name.pathmap('%d'))
+        sh %| ld #{LDFLAGS} -o #{t.name} #{t.sources.join(' ')} -T build/src/script_kernel.ld |
+    end
+end
+
+rule /^build\/obj\/kernel\/.*\.(?:cpp|S)\.o$/ => ->(t){ t.pathmap('%{^build/obj/,build/src/}p').ext('') } do |t|
+    puts "> g++  #{t.source.pathmap('%{^build/src/,}p')}"
+
+    verbose(false) do
+        mkdir_p(t.name.pathmap('%d'))
+        sh %| g++ #{CXXFLAGS} -Ibuild/src/kernel -Ibuild/src/shared/x64 -isystem build/src/lib -m64 -c #{t.source} -o #{t.name} |
+    end
+end
