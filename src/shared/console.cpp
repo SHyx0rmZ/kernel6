@@ -28,7 +28,7 @@
 #define SERIAL_DIVISOR_LATCH_ACCESS_BIT         0x80
 #endif
 
-Console::Console()
+Console::Console(bool initialize)
 {
 #if CONSOLE_USE_SERIAL == 1
     io::outb(SERIAL_LINE_CONTROL_REGISTER, SERIAL_DIVISOR_LATCH_ACCESS_BIT | SERIAL_WORD_LENGTH_SELECTOR_8BIT);
@@ -40,13 +40,25 @@ Console::Console()
     io::outb(SERIAL_MODEM_CONTROL_REGISTER, 0);
 #endif
 
-    std::memset(reinterpret_cast<void *>(CONSOLE_AREA), 0, 25 * 160);
+    if (initialize == true)
+    {
+        std::memset(reinterpret_cast<void *>(CONSOLE_AREA), 0, 25 * 160);
 
-    this->video = reinterpret_cast<std::uint16_t *>(CONSOLE_AREA);
+        this->video = reinterpret_cast<std::uint16_t *>(CONSOLE_AREA);
 
-    *this << "kernel6 >>" << endl;
+        *this << "kernel6 >>" << endl;
 
-    this->video = reinterpret_cast<std::uint16_t *>(CONSOLE_START);
+        this->video = reinterpret_cast<std::uint16_t *>(CONSOLE_START);
+    }
+    else
+    {
+        this->video = reinterpret_cast<std::uint16_t *>(CONSOLE_AREA + (160 * 25));
+
+        while (*this->video == 0)
+        {
+            this->video--;
+        }
+    }
 }
 
 Console::~Console()

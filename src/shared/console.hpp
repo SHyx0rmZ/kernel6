@@ -8,7 +8,7 @@
 
 struct Console
 {
-    Console();
+    Console(bool initialize = true);
     ~Console();
 
     Console &operator<<(const char *const str);

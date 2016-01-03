@@ -151,7 +151,7 @@ void *memory_alloc(std::size_t size)
 
 void memory_free(void *address)
 {
-    Console cout;
+    Console cout(false);
 
     cout << address << " ";
 
