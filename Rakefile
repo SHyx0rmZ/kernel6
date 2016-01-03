@@ -225,3 +225,20 @@ rule /^build\/obj\/kernel\/.*\.(?:cpp|S)\.o$/ => ->(t){ t.pathmap('%{^build/obj/
         sh %| g++ #{CXXFLAGS} -Ibuild/src/kernel -Ibuild/src/shared/x64 -isystem build/src/lib -m64 -c #{t.source} -o #{t.name} |
     end
 end
+
+task :clean do
+    verbose(false) do
+        rm_r('build') if Dir.exists?('build')
+    end
+end
+
+task :qemu => :default do
+    verbose(false) do
+        begin
+            sh %| qemu-system-x86_64 -kernel build/out/kernel6 -smp 2 -m 128M -serial stdio |
+        rescue SystemExit, Interrupt
+            sh %| reset |
+            raise
+        end
+    end
+end
